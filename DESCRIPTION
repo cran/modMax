@@ -1,0 +1,15 @@
+Package: modMax
+Type: Package
+Title: Community Structure Detection via Modularity Maximization
+Version: 1.0
+Date: 2015-02-09
+Author: Maria Schelling, Cang Hui
+Maintainer: Maria Schelling <schelling.rmaintainer@vodafone.de>
+Depends: gtools, igraph
+Description: The algorithms implemented here are used to detect the community structure of a network. 
+            These algorithms follow different approaches, but are all based on the concept of modularity maximization.
+License: GPL-2
+Packaged: 2015-02-18 09:44:37 UTC; xxx
+NeedsCompilation: no
+Repository: CRAN
+Date/Publication: 2015-02-18 13:58:02

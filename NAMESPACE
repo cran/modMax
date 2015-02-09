@@ -1,0 +1,8 @@
+export(greedy, rgplus, msgvm, cd, louvain, vertexSim, mome,
+       simulatedAnnealing, saIndividualCollectiveMoves,
+       extremalOptimization, pcseoss,
+       geneticAlgorithm,
+       spectralOptimization, multiWay, spectral1, spectral2,
+       localModularity, localModularityWang)
+
+import(igraph,gtools)

@@ -1,0 +1,17 @@
+002c98122e131f87eeca23064bb87c2a *DESCRIPTION
+e19089bf5428aeac8442afef53504d1d *NAMESPACE
+cf79941585b7b5ea62a139112617eaf9 *R/extremalOptimization.R
+92362b3fb2fe9b926ac5d0e1ded559ea *R/generalFunctions.R
+9c36ca4d34444a5166c503cc0ccc07bf *R/geneticAlgorithm.R
+0f0b1d20b7ce630f60c7d2ac9cf9715e *R/greedy.R
+e572d70f8a0aa8c21243b4a1cccad132 *R/localModularity.R
+e2fedaa79874d86bd0d87ed9ae97f8f4 *R/saMovements.R
+c1040953fa97c680a9b93c3efdf98a95 *R/simulatedAnnealing.R
+c6b4a5966d0565c85eb9afba16808d6f *R/spectralOptimization.R
+48e366099d9a4baad95bc4325e6b2def *man/extremalOptimization.Rd
+982cd936b770457589b024b56b1a5022 *man/geneticAlgorithm.Rd
+d8416dc38e8c2c4c01a1d13abdc2ff0f *man/greedy.Rd
+a97296ac1aabe8feff6ebc2e1f179c5a *man/localModularity.Rd
+f186246c79e4279822aaeeb81799bc09 *man/modMax-package.Rd
+6b82adeba83c5b0bfa93c72888c7c50b *man/simulatedAnnealing.Rd
+d892da2ed62e90ec18a3444a17a7ab62 *man/spectralOptimization.Rd
