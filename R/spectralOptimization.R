@@ -60,7 +60,7 @@ multiWay <- function(adjacency, numRandom=0, maxComm=length(adjacency[1,])){
 }
 
 #execute spectral1
-spectral1 <- function(adjacency, numRandom=0, maxComm=length(adjacency[1,])){
+spectral1 <- function(adjacency, numRandom=0, maxComm=(length(adjacency[1,])-1)){
   
   network <- graph.adjacency(adjacency, mode="undirected",weighted=TRUE)
   res <- callSpectral1(network,maxComm)
@@ -84,7 +84,7 @@ spectral1 <- function(adjacency, numRandom=0, maxComm=length(adjacency[1,])){
 }
 
 #execute spectral-2 algorithm
-spectral2 <- function(adjacency, numRandom=0, maxComm=length(adjacency[1,])){
+spectral2 <- function(adjacency, numRandom=0, maxComm=(length(adjacency[1,])-1)){
   
   network <- graph.adjacency(adjacency, mode="undirected",weighted=TRUE)
   res <- callSpectral2(network,maxComm)
@@ -110,6 +110,7 @@ spectral2 <- function(adjacency, numRandom=0, maxComm=length(adjacency[1,])){
 #general spectral optimization with optional refinement
 callSpectralOptimization <- function(network, initialC=seq(0,0,length.out=vcount(network)),
                                  refine){
+  
   if(initialC[1]==0){
     C <- initialWholeGraph(network)
     Q <- 0
@@ -359,16 +360,19 @@ callMultiWay <- function(network,maxComm){
 callSpectral1 <- function(network,maxComm){
   
   U_K <- computeUk(network,maxComm)
+  maxComm <- length(U_K[1,])
   
   C <- initialWholeGraph(network)
   Q <- 0
   for(k in 2:maxComm){
     u_k <- U_K[,1:k]
+    #print(dim(u_k))
     for(j in 1: length(u_k[,1])){
       squareVec <- sapply(u_k[j,], function(x) x=x^2)
       normvec <- sqrt(sum(squareVec))
       u_k[j,] <- sapply(u_k[j,], function(x) x=x/normvec)
     }
+    #print(k)
     C_k <- kmeans(u_k,k)$cluster
     Q_k <- calculateQ(network,C_k)
     
@@ -386,6 +390,7 @@ callSpectral1 <- function(network,maxComm){
 callSpectral2 <- function(network,maxComm){
   
   U_K <- computeUk(network,maxComm)
+  maxComm <- length(U_K[1,])
   C <- initialWholeGraph(network)
   Q <- 0
   split <- 1
@@ -396,7 +401,9 @@ callSpectral2 <- function(network,maxComm){
     Q_new <- Q
     split <- 0
     for(i in 1:max(C)){
+      #print(C)
       vertices <- which(C==i)
+      
       if(exists==0){
         u_k <- U_K[,1:k]
         for(j in 1: length(u_k[,1])){
@@ -406,25 +413,35 @@ callSpectral2 <- function(network,maxComm){
         }
         exists <- 1
       }
-      u_kc <- u_k[vertices,]
-      tmpComm <- kmeans(u_kc,2)$cluster
-      C_tmp <- C_new
-      for(j in 1:length(tmpComm)){
-        vertex <- vertices[j]
-        if(tmpComm[j]==2){
-          C_tmp[vertex]<-max(C_new)+1
+      if(length(vertices)>1){
+        #print(vertices)
+        u_kc <- u_k[vertices,]
+        #print(u_kc)
+        if(length(vertices)>2){
+          tmpComm <- kmeans(u_kc,2)$cluster
+        }
+        else{
+          tmpComm <- c(1,2)
+        }
+
+        C_tmp <- C_new
+        for(j in 1:length(tmpComm)){
+          vertex <- vertices[j]
+          if(tmpComm[j]==2){
+            C_tmp[vertex]<-max(C_new)+1
+          }
+        }
+        Q_tmp <- calculateQ(network,C_tmp)
+        if(Q_tmp>Q_new){
+          Q_new <- Q_tmp
+          C_new <- C_tmp
+          k <- k+1
+          split <- 1
+          exists <- 0
         }
       }
-      Q_tmp <- calculateQ(network,C_tmp)
-      if(Q_tmp>Q_new){
-        Q_new <- Q_tmp
-        C_new <- C_tmp
-        k <- k+1
-        split <- 1
-        exists <- 0
-      }
     }
-    
+  
     C <- C_new
     Q <- Q_new
   }
@@ -450,7 +467,9 @@ computeUk <- function(network,maxComm){
   eigenvectors <- eigens$vectors[,indices]
   
   eigenvalues <- eigenvalues[1:maxComm]
-  eigenvectors <- eigenvectors[,1:maxComm]
+  eigenvalues <- eigenvalues[Re(eigenvalues)>0]
+  dimension <- length(eigenvalues)
+  eigenvectors <- eigenvectors[,1:dimension]
   
   return(eigenvectors)
 }

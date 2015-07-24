@@ -5,4 +5,6 @@ export(greedy, rgplus, msgvm, cd, louvain, vertexSim, mome,
        spectralOptimization, multiWay, spectral1, spectral2,
        localModularity, localModularityWang)
 
-import(igraph,gtools)
+import(igraph)
+importFrom("gtools", permutations)
+importFrom("stats","kmeans","na.omit","sd")

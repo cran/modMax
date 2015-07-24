@@ -17,10 +17,10 @@ greedy <- function(adjacency,numRandom=0,
   else{
     C_initial <- seq(0,0,length.out=length(adjacency[,1]))
   }
- 
+  
   network <- graph.adjacency(adjacency, mode="undirected",weighted=TRUE)  
   res <- callGreedy(network,initialC=C_initial,q=q,initial=initial,
-                       randomized=randomized, refine=refine,coarse=coarse)
+                    randomized=randomized, refine=refine,coarse=coarse)
   res[vcount(network)+1] <- round(res[vcount(network)+1],2)
   
   randomResults <- NULL
@@ -37,7 +37,7 @@ greedy <- function(adjacency,numRandom=0,
   else{
     result <- generateOutput(res)
   }
-
+  
   return(result)
 }
 
@@ -62,9 +62,9 @@ rgplus <- function(adjacency,numRandom=0,z,randomized){
   else{
     result <- generateOutput(res)
   }
-
+  
   return(result)
-
+  
 }
 
 #execute the msg-vm approach
@@ -131,7 +131,7 @@ cd <- function(adjacency, numRandom=0,initial=c("general","own"),maxC=length(adj
   else{
     result <- generateOutput(res)
   }
-
+  
   return(result)
 }
 
@@ -189,7 +189,7 @@ vertexSim <- function(adjacency, numRandom=0, frac=0.5){
   else{
     result <- generateOutput(res)
   }
-
+  
   return(result)
 }
 
@@ -214,7 +214,7 @@ mome <- function(adjacency, numRandom=0){
   else{
     result <- generateOutput(res)
   }
-
+  
   return(result)
 }
 
@@ -222,10 +222,10 @@ mome <- function(adjacency, numRandom=0){
 #Greedy algorithm and its modifications
 callGreedy <- function(network,initialC=seq(0,0,length.out=vcount(network)),
                        q=c("general","danon","wakita1","wakita2","wakita3"),
-                   initial=c("general","prior","walkers","subgraph","adclust"),
-                   randomized=0,
-                   refine=c("none","complete","fast","kernighan","adclust"),
-                   coarse=0){
+                       initial=c("general","prior","walkers","subgraph","adclust"),
+                       randomized=0,
+                       refine=c("none","complete","fast","kernighan","adclust"),
+                       coarse=0){
   
   #initialization
   q <- match.arg(q)
@@ -286,7 +286,7 @@ callGreedy <- function(network,initialC=seq(0,0,length.out=vcount(network)),
   if(coarse !=0){
     numComm <- max(C)
   }
-
+  
   Q <- calculateQ(network,C)
   Q_best <- Q
   C_best <- C
@@ -294,7 +294,7 @@ callGreedy <- function(network,initialC=seq(0,0,length.out=vcount(network)),
   while(max(C)>1&length(DeltaQ)>1&length(which(!is.na(DeltaQ)))>0){
     #percentage <- (vcount(network)-max(C))/vcount(network)*100
     #print(paste(percentage,"%",sep=""))
-
+    
     if(q=="general"){
       maxEl <- which(DeltaQ==max(DeltaQ,na.rm=TRUE),arr.ind=TRUE)[1,]
     }
@@ -368,7 +368,7 @@ callGreedy <- function(network,initialC=seq(0,0,length.out=vcount(network)),
         maxEl <- c(rows,tmpEl)
       }
     }
-
+    
     maxI <- maxEl[1]
     maxJ <- maxEl[2]
     maxQ <- DeltaQ[maxI,maxJ]
@@ -443,6 +443,7 @@ callGreedy <- function(network,initialC=seq(0,0,length.out=vcount(network)),
           C_tmp[vertices] <- c
         }
         C_join <- updateC(C_tmp)
+        #print(C_join)
         Q_join <- calculateQ(network,C_join)
         DeltaQ <- calculateDeltaQ(network,C_join)
         a <- calculateA(network,C_join)
@@ -504,8 +505,8 @@ callRgplus <- function(network,z,randomized){
     for(i in 1:(vcount(network)-1)){
       for(j in (i+1):vcount(network)){
         if(C_cores[i]==C_cores[j]&C_tmp[i]==C_tmp[j]){
-            C_new[i] <- C_cores[i]
-            C_new[j] <- C_cores[i]
+          C_new[i] <- C_cores[i]
+          C_new[j] <- C_cores[i]
         }
       }  
     }
@@ -565,7 +566,7 @@ fastGreedyRefinement <- function(network,C,Q){
   sortedDegrees <- sort(degrees,decreasing=FALSE)
   sortedDegrees <- unique(sortedDegrees)
   indices <- NULL
-
+  
   for(s in sortedDegrees){
     indices <- c(indices, which(degrees==s))
   }
@@ -625,7 +626,7 @@ kernighanLinRefinement <- function(network,C,Q){
       C[i] <- j_max
       C <- updateC(C)
       Q <- Q + DeltaQ_max
-      if(Q>Q_best){
+      if(Q>Q_best&all.equal(Q,Q_best)==F){
         Q_best <- Q
         C_best <- C
         changed <- 1
@@ -666,67 +667,125 @@ callMsgvm <- function(network,initialC=seq(0,0,length.out=vcount(network)), parL
     a <- calculateA(network,C)
     DeltaQ <- calculateDeltaQ(network,C)
   }
-
+  
+  #print(DeltaQ)
   levelSet <- getLevelSet(DeltaQ)
   
   Q <- calculateQ(network,C)
   Q_best <- Q
   C_best <- C
+  elements <- TRUE
   
-  while(levelSet[3,1]>0){
-    #percentage <- (vcount(network)-max(C))/vcount(network)*100
-    #print(paste(percentage,"%",sep=""))
-    
-    touched <- seq(0,0,length.out=max(C))
-    mp <- levelSet[,1:parL]
-    mp <- mp[,mp[3,]>0]
-    
-    C_join <- C
-    if(length(mp)>3){
-      lengthMp <- length(mp[1,])
-    }
-    else{
-      lengthMp <- 1
-    }
-    
-    for(e in 1:lengthMp){
-      if(lengthMp>1){
-        i <- mp[1,e]
-        j <- mp[2,e]
+  while(elements){
+    if(length(levelSet)>3){
+      if(levelSet[3,1]>0){
+        #percentage <- (vcount(network)-max(C))/vcount(network)*100
+        #print(paste(percentage,"%",sep=""))
+        
+        touched <- seq(0,0,length.out=max(C))
+        if(length(levelSet[1,])<parL){
+          parL <- length(levelSet[1,])
+        }
+        mp <- levelSet[,1:parL]
+        mp <- mp[,mp[3,]>0]
+        #print(levelSet)
+        #print(mp)
+        
+        C_join <- C
+        if(length(mp)>3){
+          lengthMp <- length(mp[1,])
+        }
+        else{
+          lengthMp <- 1
+        }
+        
+        for(e in 1:lengthMp){
+          if(lengthMp>1){
+            i <- mp[1,e]
+            j <- mp[2,e]
+          }
+          else{
+            i <- mp[1]
+            j <- mp[2]
+          }  
+          
+          #print(length(touched))
+          #print(i)
+          #print(j)
+          if(touched[i]==0&touched[j]==0){
+            
+            indexI <- min(which(C==i))
+            i_join <- C_join[indexI]
+            
+            indexJ <- min(which(C==j))
+            j_join <- C_join[indexJ]
+            
+            DeltaQ <- updateDeltaQ(DeltaQ,a,i_join,j_join)
+            for(k in 1:length(DeltaQ[i_join,])){
+              levelSet <- updateLevelSet(levelSet,i_join,k,DeltaQ[i_join,k])
+            }
+            
+            #print(j_join)
+            #print(levelSet)
+            if(length(levelSet)>3){
+              levelSet <- levelSet[,levelSet[1,]!=j_join]
+              levelSet[1,] <- sapply(levelSet[1,], function(x) if(x>j_join){x=x-1}else{x=x})
+              levelSet <- levelSet[,levelSet[2,]!=j_join]
+              #print(levelSet)
+              if(length(levelSet)>3){
+                levelSet[2,] <- sapply(levelSet[2,], function(x) if(x>j_join){x=x-1}else{x=x})
+              }
+              else{
+                if(levelSet[2]==j_join){
+                  elements <- FALSE
+                }
+                else{
+                  if(levelSet[2]>j_join){
+                    levelSet[2] <- levelSet[2]-1
+                  }
+                  
+                }
+              }
+            }  
+            else{
+              if(levelSet[1]==j_join|levelSet[2]==j_join){
+                elements <- FALSE
+              }
+              else{
+                if(levelSet[1]>j_join){
+                  levelSet[1] <- levelSet[1]-1
+                }
+                if(levelSet[2]>j_join){
+                  levelSet[2] <- levelSet[2]-1
+                }
+              }
+            }
+            
+            a[i_join] <- a[i_join]+a[j_join]
+            a <- a[-j_join]
+            
+            touched[i] <- 1
+            touched[j] <- 1
+            
+            indices <- which(C==j)
+            C_join[indices] <- i_join
+            C_join <- updateC(C_join)  
+          }
+          
+        }
       }
       else{
-        i <- mp[1]
-        j <- mp[2]
-      }  
-
-      if(touched[i]==0&touched[j]==0){
-
-          indexI <- min(which(C==i))
-          i_join <- C_join[indexI]
-          
-          indexJ <- min(which(C==j))
-          j_join <- C_join[indexJ]
-
-          DeltaQ <- updateDeltaQ(DeltaQ,a,i_join,j_join)
-          for(k in 1:length(DeltaQ[i_join,])){
-            levelSet <- updateLevelSet(levelSet,i_join,k,DeltaQ[i_join,k])
-          }
-          levelSet <- levelSet[,levelSet[1,]!=j_join]
-          levelSet[1,] <- sapply(levelSet[1,], function(x) if(x>j_join){x=x-1}else{x=x})
-          levelSet <- levelSet[,levelSet[2,]!=j_join]
-          levelSet[2,] <- sapply(levelSet[2,], function(x) if(x>j_join){x=x-1}else{x=x})
-          
-          a[i_join] <- a[i_join]+a[j_join]
-          a <- a[-j_join]
-          
-          touched[i] <- 1
-          touched[j] <- 1
-          
-          indices <- which(C==j)
-          C_join[indices] <- i_join
-          C_join <- updateC(C_join)  
+        break
       }
-
+    }
+    else{
+      if(levelSet[3]>0){
+        elements <- FALSE
+        C_join <- sapply(C_join, function(x) x=1)
+      }
+      else{
+        break
+      }
     }
 
     C <- C_join
@@ -773,7 +832,13 @@ updateLevelSet <- function(levelSet,i,j,DeltaQ){
   }
   
   index <- which(levelSet[1,]==i&levelSet[2,]==j)
-  levelSet[3,index] <- DeltaQ
+  if(!is.na(DeltaQ)){
+    levelSet[3,index] <- DeltaQ
+  }
+  else{
+    levelSet[3,index] <- 0
+  }
+  
   
   levelSet <- levelSet[,order(levelSet[3,],decreasing=T)]
   return(levelSet)
@@ -793,7 +858,7 @@ callCD <- function(network,initialC=seq(0,0,length.out=vcount(network)),maxC,ite
   else{
     C <- initialC
   }
-
+  
   C_best <- C
   Q_best <- calculateQ(network,C)
   
@@ -807,7 +872,7 @@ callCD <- function(network,initialC=seq(0,0,length.out=vcount(network)),maxC,ite
     tmp <- completeGreedyRefinement(network,C_curr,Q_curr)
     C_curr <- tmp[1:vcount(network)]
     Q_curr <- tmp[vcount(network)+1]
-
+    
     if(Q_curr>Q_best){
       C_best <- C_curr
       Q_best <- Q_curr
@@ -956,12 +1021,14 @@ callVertexSim <- function(network,frac){
     for(i in 1:max(C)){
       #percent <- (i-1)/max(C)*100
       #print(paste(percent,"%",sep=""))
-
-      j_max <- which(DeltaQ[i,]==max(DeltaQ[i,],na.rm=TRUE))[1]
-      DeltaQ_max <- DeltaQ[i,j_max]
-      
-      if(DeltaQ_max>0){
-        linkSet[i,j_max] <- 1
+      #print(max(C))
+      if(max(C)>1){
+        j_max <- which(DeltaQ[i,]==max(DeltaQ[i,],na.rm=TRUE))[1]
+        DeltaQ_max <- DeltaQ[i,j_max]
+        
+        if(DeltaQ_max>0){
+          linkSet[i,j_max] <- 1
+        }
       }
     }
     
@@ -1019,7 +1086,7 @@ callVertexSim <- function(network,frac){
             
             if(Q>Q_best){
               Q_best <- Q
-
+              
               C_best <- C_join
             }
             linkSet[i,j] <- NA
@@ -1042,11 +1109,11 @@ weighting <- function(network){
   weightedEdges <- NULL
   for(e in 1:length(edges[,1])){
     v1 <- edges[e,1]
-    v1 <- unlist(strsplit(v1,split=""))[2]
-    v1 <- as.numeric(v1)
+    #v1 <- unlist(strsplit(v1,split=""))[2]
+    #v1 <- as.numeric(v1)
     v2 <- edges[e,2]
-    v2 <- unlist(strsplit(v2,split=""))[2]
-    v2 <- as.numeric(v2)
+    #v2 <- unlist(strsplit(v2,split=""))[2]
+    #v2 <- as.numeric(v2)
     col <- rbind(v1,v2,0)
     weightedEdges <- cbind(weightedEdges,col)
   }
@@ -1087,7 +1154,7 @@ callMome <- function(network){
   res <- computeCoarsening(adjacency,adjacency,communities)
   coarsening <- res[1:(length(res)/2)]
   communities <- res[(length(res)/2+1):length(res)]
-
+  
   C_tmp <- 0
   
   for(g in length(coarsening):2){

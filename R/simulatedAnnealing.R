@@ -144,7 +144,8 @@ callSaIndividualCollectiveMoves <- function(network,initialC=seq(0,0,length.out=
 
   while(steps < fixed){
     #percentage <- steps/fixed*100
-    #print(paste(percentage,"%",sep=""))
+    #(paste(percentage,"%",sep=""))
+    #print(C_best)
     
     for(a in 1:numIter*n^2){
       result <- individualNodeMovement(network, C, Q, beta)
@@ -156,7 +157,7 @@ callSaIndividualCollectiveMoves <- function(network,initialC=seq(0,0,length.out=
         C_best <- C_new
       }
       Q <- Q_new
-      C <- C_best
+      C <- C_new
       if(accepted==0){
         steps <- steps+1
       } else{
@@ -164,7 +165,13 @@ callSaIndividualCollectiveMoves <- function(network,initialC=seq(0,0,length.out=
       }
     }
     for(b in 1:numIter*n){
-      split <- sample(c(0,1),1)
+      if(max(C)>1){
+        split <- sample(c(0,1),1)
+      }
+      else{
+        split <- 1
+      }
+      
       if(split==0){
         result <- mergeCommunities(network,C,Q,beta)
       }
@@ -179,7 +186,7 @@ callSaIndividualCollectiveMoves <- function(network,initialC=seq(0,0,length.out=
         C_best <- C_new
       }
       Q <- Q_new
-      C <- C_best
+      C <- C_new
       if(accepted==0){
         steps <- steps+1
       } else{

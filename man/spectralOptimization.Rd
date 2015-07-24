@@ -16,8 +16,8 @@ Spectral optimization algorithms
 spectralOptimization(adjacency, numRandom = 0, initial = c("general", "own"),
                       refine = FALSE)
 multiWay(adjacency, numRandom=0, maxComm=length(adjacency[1,]))
-spectral1(adjacency, numRandom=0, maxComm=length(adjacency[1,]))
-spectral2(adjacency, numRandom=0, maxComm=length(adjacency[1,]))
+spectral1(adjacency, numRandom=0, maxComm=(length(adjacency[1,])-1))
+spectral2(adjacency, numRandom=0, maxComm=(length(adjacency[1,])-1))
 }
 
 \arguments{

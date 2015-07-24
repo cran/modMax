@@ -91,14 +91,14 @@ Maria Schelling, Cang Hui
 
 \examples{
 #unweighted network
-randomgraph1 <- erdos.renyi.game(10, 0.3, type="gnp",directed = FALSE, loops = FALSE)
+randomgraph <- erdos.renyi.game(10, 0.3, type="gnp",directed = FALSE, loops = FALSE)
 
 #to ensure that the graph is connected
-vertices1 <- which(clusters(randomgraph1)$membership==1)  
-graph1 <- induced.subgraph(randomgraph1,vertices1)
+vertices <- which(clusters(randomgraph)$membership==1)  
+graph <- induced.subgraph(randomgraph,vertices)
 
-adj1 <- get.adjacency(graph1)
-result1 <- geneticAlgorithm(adj1, p=4, g=8)
+adj <- get.adjacency(graph)
+result <- geneticAlgorithm(adj, p=4, g=6)
 
 }
 

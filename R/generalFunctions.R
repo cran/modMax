@@ -29,19 +29,44 @@ initialPriorKnowledge <- function(network){
     C <- updateC(C)
     vertices <- vertices[vertices != vertex]
     if(length(edges)>2){
-      deleteEdges <- which(edges==paste("V",vertex,sep=""),arr.ind=TRUE)[,1]
+      deleteEdges <- which(edges==vertex,arr.ind=TRUE)
+      if(length(deleteEdges)>2){
+        deleteEdges <- deleteEdges[,1]
+      }
+      else{
+        deleteEdges <- deleteEdges[1]
+      }
       edges <- edges[-deleteEdges,]
     }
     else{
-      deleteEdges <- which(edges==paste("V",vertex,sep=""),arr.ind=TRUE)
-      edges <- edges[-deleteEdges]
+      if(edges[1]==vertex|edges[2]==vertex){
+        edges <- NULL
+        deleteEdges <- 1
+      }      
     }
     currGraph <- delete.edges(currGraph,deleteEdges)
     for(n in neighs){
       vertices <- vertices[vertices != n]
+      #print(edges)
+      #print(n)
       if(degree(currGraph,n)>0){
-        deleteEdges <- which(edges==paste("V",n,sep=""),arr.ind=TRUE)[,1]
-        edges <- edges[-deleteEdges,]
+        if(length(edges)>2){
+          deleteEdges <- which(edges==n,arr.ind=TRUE)
+          if(length(deleteEdges)>2){
+            deleteEdges <- deleteEdges[,1]
+          }
+          else{
+            deleteEdges <- deleteEdges[1]
+          }
+          edges <- edges[-deleteEdges,]
+        }
+        else{
+          if(edges[1]==n|edges[2]==n){
+            edges <- NULL
+            deleteEdges <- 1
+          } 
+        }
+        #print(deleteEdges)
         currGraph <- delete.edges(currGraph,deleteEdges)
       }
     }
@@ -198,17 +223,19 @@ calculateDeltaQ <- function(network,C){
   #print("calculate Q...")
   DeltaQ <- matrix(,nrow=max(C),ncol=max(C))
   
-  for(i in 1:(max(C)-1)){
-    
-    for(j in (i+1):max(C)){
-      value <- calculateQMerge(network,C,i,j)
-      if(value!=0){
-        DeltaQ[i,j] <- value
-        DeltaQ[j,i] <- DeltaQ[i,j]
-      }      
+  if(max(C)>1){
+    for(i in 1:(max(C)-1)){
+      
+      for(j in (i+1):max(C)){
+        value <- calculateQMerge(network,C,i,j)
+        if(value!=0){
+          DeltaQ[i,j] <- value
+          DeltaQ[j,i] <- DeltaQ[i,j]
+        }      
+      }
+      #percentage <- i/(max(C)-1)*100
+      #print(paste(percentage,"%",sep=""))
     }
-    #percentage <- i/(max(C)-1)*100
-    #print(paste(percentage,"%",sep=""))
   }
   
   return(DeltaQ)
@@ -226,11 +253,11 @@ calculateQ <- function(network,C){
     for(i in 1:vcount(network)){
       if(C[i]==c){
         a <- a+getDegree(network,i)
-        neighbors <- neighbors(network,i)
-        if(length(neighbors)>0){
-          for(j in 1:length(neighbors)){
-            if(C[neighbors[j]]==c){
-              e <- e+A[i,neighbors[j]]
+        neighbours <- neighbors(network,i)
+        if(length(neighbours)>0){
+          for(j in 1:length(neighbours)){
+            if(C[neighbours[j]]==c){
+              e <- e+A[i,as.numeric(neighbours[j])]
             }
           }
         }
@@ -269,6 +296,8 @@ calculateQMerge <- function(network,C,id1,id2){
   for(i in 1:length(comm1)){
     for(j in 1:length(comm2)){
       if(are.connected(network,comm1[i],comm2[j])){
+        #print(comm1[i])
+        #print(comm2[j])
         e <- e+adj[comm1[i],comm2[j]]
         connect <- 1
       }
@@ -301,7 +330,7 @@ calculateQMove <- function(network,C,community,vertex){
 
   Q_move <- -Inf
   
-  if(C[vertex]!=community){
+  if(C[vertex]!= community){
     newComm <- NULL
     oldComm <- NULL
     for(i in 1:length(C)){
@@ -342,12 +371,14 @@ calculateQMove <- function(network,C,community,vertex){
       }
       
       Q_move <- 2*(links_new-links_old)/sum(adjacency)-2*(getDegree(network,vertex)*(a_new-(a_old-getDegree(network,vertex))))/(sum(adjacency)*sum(adjacency))
+      #print(Q_move)
     }
   }
   else{
     Q_move <- 0
   }
-    
+  
+  #print(Q_move)
   return(Q_move)
 }
 
@@ -427,7 +458,7 @@ calculateRandomGraph <- function(network){
   vertDegs <- sample(degs,vcount(network),replace=FALSE)
   rndNetwork <- degree.sequence.game(out.deg=vertDegs, method="vl")
   rndWeight <- sample(weight,ecount(rndNetwork),replace=FALSE)
-  rndNetwork <- set.edge.attribute(rndNetwork,"weight",rndWeight)
+  rndNetwork <- set.edge.attribute(rndNetwork,"weight",value=rndWeight)
   
   return(rndNetwork)
 }
@@ -437,6 +468,7 @@ getDegree <- function(network,i){
   deg <- sum(adj[i,])
   return(deg)
 }
+
 generateOutput <- function(res,rndRes=NULL,random=FALSE){
   
   result <- list()
